@@ -71,8 +71,22 @@ func handleSequential(conn net.Conn) {
 	checkError(err)
 }
 
-func handleCSPF() {
-	fmt.Println("Not implemented")
+func handleCSPF(conn net.Conn) {
+	defer conn.Close()
+	
+	// encoder & decoder
+	enc := gob.NewEncoder(conn)
+	dec := gob.NewDecoder(conn)
+	
+	// Recibimos el intervalo
+	var req com.Request
+	dec.Decode(&req)
+	
+	// Obtener los primos del intervalo
+	primos := FindPrimes(req.Interval)
+	primos_reply := com.Reply{Id: req.Id, Primes: primos}
+	err := enc.Encode(primos_reply)
+	checkError(err)
 }
 
 func handleCPF(ch chan net.Conn) {
@@ -120,7 +134,11 @@ func main() {
 				handleSequential(conn)
 			}
 		case "-cspf":
-			fmt.Println("Concurrente sin pool fijo de gorutines")
+			for {
+				conn, err := listener.Accept()
+				checkError(err)
+				go handleCSPF(conn)
+			}
 		case "-cpf":
 			var ch chan net.Conn
 			ch = make(chan net.Conn)

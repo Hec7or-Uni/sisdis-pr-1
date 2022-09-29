@@ -122,8 +122,7 @@ func main() {
 				go handleSimple(conn)
 			}
 		case "-cpf":
-			var ch chan net.Conn
-			ch = make(chan net.Conn)
+			ch := make(chan net.Conn)
 			for i := 0; i < 6; i++ {
 				go handleCPF(ch)
 			}

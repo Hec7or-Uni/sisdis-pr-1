@@ -109,13 +109,4 @@ func main() {
     }
 
     <- done
-    // send last packet to close connection
-    // tcpAddr, err := net.ResolveTCPAddr("tcp", endpoint)
-    // checkError(err)
-    // conn, err := net.DialTCP("tcp", nil, tcpAddr)
-    // checkError(err)
-    // encoder := gob.NewEncoder(conn)
-    // request := com.Request{Id: -1, Interval: interval}
-    // err = encoder.Encode(request)
-    // checkError(err)
 }

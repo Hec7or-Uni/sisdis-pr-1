@@ -53,25 +53,7 @@ func getParam(id int, key string, dfl string) (string) {
 	return dfl
 }
 
-func handleSequential(conn net.Conn) {
-	defer conn.Close()
-	
-	// encoder & decoder
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-	
-	// Recibimos el intervalo
-	var req com.Request
-	dec.Decode(&req)
-	
-	// Obtener los primos del intervalo
-	primos := FindPrimes(req.Interval)
-	primos_reply := com.Reply{Id: req.Id, Primes: primos}
-	err := enc.Encode(primos_reply)
-	checkError(err)
-}
-
-func handleCSPF(conn net.Conn) {
+func handleSimple(conn net.Conn) {
 	defer conn.Close()
 	
 	// encoder & decoder
@@ -131,13 +113,13 @@ func main() {
 			for {
 				conn, err := listener.Accept()
 				checkError(err)
-				handleSequential(conn)
+				handleSimple(conn)
 			}
 		case "-cspf":
 			for {
 				conn, err := listener.Accept()
 				checkError(err)
-				go handleCSPF(conn)
+				go handleSimple(conn)
 			}
 		case "-cpf":
 			var ch chan net.Conn

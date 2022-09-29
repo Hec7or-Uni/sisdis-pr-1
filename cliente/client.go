@@ -55,8 +55,9 @@ func sendRequest(endpoint string, id int, interval com.TPInterval, addChan chan 
 // indica que ha llegado una respuesta de una petición. En la respuesta, se obtiene también el timestamp de la recepción.
 // Antes de eliminar una petición se imprime por la salida estándar el id de una petición y el tiempo transcurrido, observado
 // por el cliente (tiempo de transmisión + tiempo de overheads + tiempo de ejecución efectivo)
-func handleRequests(addChan chan com.TimeRequest, delChan chan com.TimeReply) {
+func handleRequests(addChan chan com.TimeRequest, delChan chan com.TimeReply, done chan bool, MAX_REQ int) {
     requests := make(map[int]time.Time)
+    i := 0
     for {
         select {
             case request := <- addChan:
@@ -64,6 +65,10 @@ func handleRequests(addChan chan com.TimeRequest, delChan chan com.TimeReply) {
             case reply := <- delChan:
                 fmt.Println(reply.Id, " ", reply.T.Sub(requests[reply.Id]))
                 delete(requests, reply.Id)
+                i++;
+                if i == MAX_REQ {
+                    done <- true
+                }
         }
     }
 }
@@ -92,8 +97,9 @@ func main() {
 
     addChan := make(chan com.TimeRequest)
     delChan := make(chan com.TimeReply)
+	done := make(chan bool)
 
-    go handleRequests(addChan, delChan)
+    go handleRequests(addChan, delChan, done, numIt * requestTmp)
     
     for i := 0; i < numIt; i++ {
         for t := 1; t <= requestTmp; t++{
@@ -101,4 +107,15 @@ func main() {
         }
         time.Sleep(time.Duration(tts) * time.Millisecond)
     }
+
+    <- done
+    // send last packet to close connection
+    // tcpAddr, err := net.ResolveTCPAddr("tcp", endpoint)
+    // checkError(err)
+    // conn, err := net.DialTCP("tcp", nil, tcpAddr)
+    // checkError(err)
+    // encoder := gob.NewEncoder(conn)
+    // request := com.Request{Id: -1, Interval: interval}
+    // err = encoder.Encode(request)
+    // checkError(err)
 }

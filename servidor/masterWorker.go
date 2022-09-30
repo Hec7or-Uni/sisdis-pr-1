@@ -17,7 +17,7 @@ import (
 	"sisdis-pr-1/com"
 )
 
-var connections = make(chan com.AUX1)
+var connections = make(chan net.Conn)
 var res = make(chan com.AUX2)
 
 func checkError(err error) {
@@ -63,11 +63,21 @@ func getParam(id int, key string, dfl string) (string) {
 // Tratamiento para generar el resultado de la operación
 func handler() {
 	for {
-		data := <- connections
+		conn := <- connections
+
+		// decoder
+		dec := gob.NewDecoder(conn)
+		
+		// Recibimos el intervalo
+		var req com.Request
+		dec.Decode(&req)
+
 		// Obtener los primos del intervalo
-		primos := FindPrimes(data.Request.Interval)
-		primos_reply := com.Reply{Id: data.Request.Id, Primes: primos}
-		connReply := com.AUX2{C: data.C, Reply: primos_reply}
+		primos := FindPrimes(req.Interval)
+
+		// Crear obj que mandas por el canal
+		primos_reply := com.Reply{Id: req.Id, Primes: primos}
+		connReply := com.AUX2{C: conn, Reply: primos_reply}
 		res <- connReply
 	}
 }
@@ -89,13 +99,7 @@ func allocate(listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
 		checkError(err)
-
-		dec := gob.NewDecoder(conn)
-		var req com.Request
-		dec.Decode(&req)
-		request := com.Request{Id: req.Id, Interval: req.Interval}
-		connection := com.AUX1{C: conn, Request: request}
-		connections <- connection
+		connections <- conn
 	}
 }
 

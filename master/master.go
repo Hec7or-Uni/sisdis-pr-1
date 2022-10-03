@@ -67,8 +67,6 @@ func sendRequest(endpoint string, enc *gob.Encoder, dec *gob.Decoder){
 	conn2w, err := net.DialTCP("tcp", nil, tcpAddr)
 	checkError(err)
 
-	fmt.Println(req.Interval)
-
 	enc2w := gob.NewEncoder(conn2w)
 	dec2w := gob.NewDecoder(conn2w)
 	err = enc2w.Encode(req.Interval)
@@ -92,14 +90,17 @@ func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) []int {
 // Master
 //----------------------------------------------------------------------
 
-func createPool(endpoints [1]string) {
+func createPool(endpoints [3]string) {
 	for index, endpoint := range endpoints {
 		go handleRequests(index + 1, endpoint)	// crear goroutine para leer peticiones
 	}
 }
 
 func checkWorkerStatus(endpoint string) bool {
-	out, _ := exec.Command("ping", endpoint, "-c 1").Output()
+	out, err := exec.Command("ping", endpoint[:15], "-c 1").Output()
+	if err != nil {
+		return false
+	}
 	return strings.Contains(string(out), "0% packet loss")
 }
 
@@ -113,10 +114,10 @@ func main() {
 	listener, err := net.Listen(CONN_TYPE, CONN_HOST + ":" + CONN_PORT)
 	checkError(err)
 	
-	endpoints := [1]string{
-		"127.0.0.1:5001", 
-		// "127.0.0.1:5002", 
-		// "127.0.0.1:5003",
+	endpoints := [3]string{
+		"155.210.154.197:5001",
+		"155.210.154.199:5002",
+		"155.210.154.200:5003", // maquina apagada 3/10/2022 <- fuerza fallo
 	}
 
 	// crear pool de handle request

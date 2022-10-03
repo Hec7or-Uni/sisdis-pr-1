@@ -88,8 +88,18 @@ func receiveReply(decoder *gob.Decoder, delChan chan com.TimeReply, conn net.Con
 	conn.Close()
 }
 
+func getParam(id int, key string, dfl string) (string) {
+	value, defined := os.LookupEnv(key)
+	if defined { return value }
+	if len(os.Args) >= id + 1 && os.Args[id] != "" { return os.Args[id] }
+	return dfl
+}
+
 func main() {
-    endpoint := "127.0.0.1:5000"
+	CONN_HOST := getParam(2, "HOST", "127.0.0.1")
+	CONN_PORT := getParam(3, "PORT", "5000")
+
+    endpoint := CONN_HOST + ":" + CONN_PORT
     numIt := 10
     requestTmp := 6
     interval := com.TPInterval{A: 1000, B: 70000}

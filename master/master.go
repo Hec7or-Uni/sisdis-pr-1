@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"sisdis-pr-1/com"
+	"strings"
+	"time"
 )
 
 var connections = make(chan net.Conn)
@@ -25,18 +28,29 @@ func getParam(id int, key string, dfl string) (string) {
 }
 
 func handleRequests(workerId int, endpoint string) {
+	workerDown := 0
 	for {
-		conn := <- connections
+		if checkWorkerStatus(endpoint) {
+			workerDown = 0
+			conn := <- connections
 
-		fmt.Println("Worker ", workerId, " handling request")
+			fmt.Println("Worker ", workerId, " handling request")
 
-		// encoder & decoder para comunicarse con el cliente
-		enc := gob.NewEncoder(conn)
-		dec := gob.NewDecoder(conn)
+			// encoder & decoder para comunicarse con el cliente
+			enc := gob.NewEncoder(conn)
+			dec := gob.NewDecoder(conn)
 
-		// enviar request a worker
-		// sendRequest(fmt.Sprintf("127.0.0.1:%d", 5000 + workerId), enc, dec)
-		sendRequest(endpoint, enc, dec)
+			// enviar request a worker
+			sendRequest(endpoint, enc, dec)
+		} else {
+			fmt.Println("Worker ", workerId, " is down")
+			time.Sleep(time.Duration(5000) * time.Millisecond)	// 5 segundos
+			workerDown++
+			if workerDown == 3 {
+				fmt.Println("Worker ", workerId, " is not responding")
+				break
+			}
+		}
 	}
 }
 
@@ -78,17 +92,18 @@ func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) []int {
 // Master
 //----------------------------------------------------------------------
 
-func createPool(num int) {
-	for i := 1; i <= num; i++ {
-		endpoint := fmt.Sprintf("127.0.0.1:%d", 5000 + i)
-		go handleRequests(i, endpoint)	// crear goroutine para leer peticiones
+func createPool(endpoints [1]string) {
+	for index, endpoint := range endpoints {
+		go handleRequests(index + 1, endpoint)	// crear goroutine para leer peticiones
 	}
 }
 
-func main() {
+func checkWorkerStatus(endpoint string) bool {
+	out, _ := exec.Command("ping", endpoint, "-c 1").Output()
+	return strings.Contains(string(out), "0% packet loss")
+}
 
-	//hacer ping a los workers
-	
+func main() {
 	CONN_TYPE := getParam(1, "TYPE", "tcp")
 	CONN_HOST := getParam(2, "HOST", "127.0.0.1")
 	CONN_PORT := getParam(3, "PORT", "5000")
@@ -98,8 +113,14 @@ func main() {
 	listener, err := net.Listen(CONN_TYPE, CONN_HOST + ":" + CONN_PORT)
 	checkError(err)
 	
+	endpoints := [1]string{
+		"127.0.0.1:5001", 
+		// "127.0.0.1:5002", 
+		// "127.0.0.1:5003",
+	}
+
 	// crear pool de handle request
-	createPool(3)
+	createPool(endpoints)
 
 	for {
 		conn, err := listener.Accept()

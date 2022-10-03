@@ -41,7 +41,7 @@ func handleRequests(workerId int, endpoint string) {
 			dec := gob.NewDecoder(conn)
 
 			// enviar request a worker
-			sendRequest(endpoint, enc, dec)
+			sendRequest(endpoint, enc, dec, conn.RemoteAddr().String()[:15])
 		} else {
 			fmt.Println("Worker ", workerId, " is down")
 			time.Sleep(time.Duration(5000) * time.Millisecond)	// 5 segundos
@@ -55,10 +55,13 @@ func handleRequests(workerId int, endpoint string) {
 }
 
 // Manda una request a un worker
-func sendRequest(endpoint string, enc *gob.Encoder, dec *gob.Decoder){
+func sendRequest(endpoint string, enc *gob.Encoder, dec *gob.Decoder, ipClient string){
+	timeStart := time.Now()
 	// Datos de la request
 	var req com.Request
+	txonStart1 := time.Now()
 	dec.Decode(&req)
+	txonEnd1 := time.Now()
 
 	// Conectamos con el worker
 	tcpAddr, err := net.ResolveTCPAddr("tcp", endpoint)
@@ -69,18 +72,33 @@ func sendRequest(endpoint string, enc *gob.Encoder, dec *gob.Decoder){
 
 	enc2w := gob.NewEncoder(conn2w)
 	dec2w := gob.NewDecoder(conn2w)
+	
+	txonStartw1 := time.Now()
 	err = enc2w.Encode(req.Interval)
 	checkError(err)
+	txonEndw1 := time.Now()
+
+	txonStartw2 := time.Now()
 	reply := receiveReply(dec2w, conn2w)
-	primos_reply := com.Reply{Id: req.Id, Primes: reply}
+	txonEndw2 := time.Now()
+	primos_reply := com.Reply{Id: req.Id, Primes: reply.Primes}
+	
+	txonStart2 := time.Now()
 	enc.Encode(primos_reply)
+	checkError(err)
+	txonEnd2 := time.Now()
+
+	txon := txonEnd1.Sub(txonStart1) + txonEnd2.Sub(txonStart2) + txonEndw1.Sub(txonStartw1) + txonEndw2.Sub(txonStartw2)	// tiempo de transmisión
+	tex := reply.T														// tiempo de ejecución
+	to := time.Since(timeStart) - txon - tex	// tiempo de espera (overhead)
+	fmt.Println(ipClient, "\t", req.Id, "\t", txon, "\t", tex, "\t", to)
 }
 
 // Gorutine que recibe mensajes de los workers con los resultados
 // de las operaciones
-func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) []int {
+func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) com.CustomReply {
 	defer conn2w.Close()
-	var reply []int
+	var reply com.CustomReply
 	err := dec2w.Decode(&reply)
 	checkError(err)
 	return reply

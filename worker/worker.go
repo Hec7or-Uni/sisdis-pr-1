@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"sisdis-pr-1/com"
+	"time"
 )
 
 func checkError(err error) {
@@ -59,12 +60,13 @@ func handler(conn net.Conn) {
 	// Recibimos el intervalo
 	var req com.TPInterval
 	dec.Decode(&req)
-
-	fmt.Println("Received request: ", req)
 	
 	// Obtener los primos del intervalo
+	texStart := time.Now()
 	primos := FindPrimes(req)
-	err := enc.Encode(primos)
+	texEnd := time.Now()
+	reply:= com.CustomReply{Primes: primos, T: texEnd.Sub(texStart)}
+	err := enc.Encode(reply)
 	checkError(err)
 }
 

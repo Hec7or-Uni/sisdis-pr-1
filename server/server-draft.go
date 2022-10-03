@@ -15,6 +15,7 @@ import (
 	"net"
 	"os"
 	"sisdis-pr-1/com"
+	"time"
 )
 
 func checkError(err error) {
@@ -58,6 +59,7 @@ func getParam(id int, key string, dfl string) string {
 }
 
 func handleSimple(conn net.Conn) {
+	timeStart := time.Now()
 	defer conn.Close()
 
 	// encoder & decoder
@@ -66,17 +68,30 @@ func handleSimple(conn net.Conn) {
 
 	// Recibimos el intervalo
 	var req com.Request
+	txonStart1 := time.Now()
 	dec.Decode(&req)
+	txonEnd1 := time.Now()
 
 	// Obtener los primos del intervalo
+	texStart := time.Now()
 	primos := FindPrimes(req.Interval)
+	texEnd := time.Now()
 	primos_reply := com.Reply{Id: req.Id, Primes: primos}
+
+	txonStart2 := time.Now()
 	err := enc.Encode(primos_reply)
 	checkError(err)
+	txonEnd2 := time.Now()
+
+	txon := txonEnd1.Sub(txonStart1) + txonEnd2.Sub(txonStart2) // tiempo de transmisión
+	tex := texEnd.Sub(texStart)																	// tiempo de ejecución
+	to := time.Since(timeStart) - txon - tex										// tiempo de espera (overhead)
+	fmt.Println(conn.RemoteAddr().String()[:15], "\t", req.Id, "\t", txon, "\t", tex, "\t", to)
 }
 
 func handleCPF(ch chan net.Conn) {
 	for {
+		timeStart := time.Now()
 		var conn net.Conn
 		conn = <-ch
 		defer conn.Close()
@@ -87,18 +102,26 @@ func handleCPF(ch chan net.Conn) {
 
 		// Recibimos el intervalo
 		var req com.Request
+		txonStart1 := time.Now()
 		dec.Decode(&req)
+		txonEnd1 := time.Now()
 
 		// Obtener los primos del intervalo
+		texStart := time.Now()
 		primos := FindPrimes(req.Interval)
+		texEnd := time.Now()
 		primos_reply := com.Reply{Id: req.Id, Primes: primos}
+
+		txonStart2 := time.Now()
 		err := enc.Encode(primos_reply)
 		checkError(err)
-	}
-}
+		txonEnd2 := time.Now()
 
-func handleMW() {
-	fmt.Println("Not implemented")
+		txon := txonEnd1.Sub(txonStart1) + txonEnd2.Sub(txonStart2) // tiempo de transmisión
+		tex := texEnd.Sub(texStart)																	// tiempo de ejecución
+		to := time.Since(timeStart) - txon - tex										// tiempo de espera (overhead)
+		fmt.Println(conn.RemoteAddr().String()[:15], "\t", req.Id, "\t", txon, "\t", tex, "\t", to)
+	}
 }
 
 func main() {
@@ -136,8 +159,6 @@ func main() {
 			checkError(err)
 			ch <- conn
 		}
-	case "-mw":
-		fmt.Println("Master Worker")
 	default:
 		fmt.Println("Undefined")
 	}

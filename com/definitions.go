@@ -6,7 +6,7 @@
 * FICHERO: definitions.go
 * DESCRIPCIÓN: contiene las definiciones de estructuras de datos necesarias para
 *			la práctica 1
-*/
+ */
 package com
 
 import "time"
@@ -34,4 +34,9 @@ type Reply struct {
 type TimeReply struct {
     Id int
     T time.Time
+}
+
+type CustomReply struct {
+    T time.Duration
+    Primes []int
 }

@@ -17,14 +17,7 @@ import (
 	"time"
 )
 
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-}
-
-// sendRequest envía una petición (id, interval) al servidor. Una petición es un par id 
+// sendRequest envía una petición (id, interval) al servidor. Una petición es un par id
 // (el identificador único de la petición) e interval, el intervalo en el cual se desea que el servidor encuentre los
 // números primos. La petición se serializa utilizando el encoder y una vez enviada la petición
 // se almacena en una estructura de datos, junto con una estampilla
@@ -33,17 +26,17 @@ func checkError(err error) {
 // petición a la estructura de datos mediante el canal addChan
 func sendRequest(endpoint string, id int, interval com.TPInterval, addChan chan com.TimeRequest, delChan chan com.TimeReply){
     tcpAddr, err := net.ResolveTCPAddr("tcp", endpoint)
-    checkError(err)
+    com.CheckError(err)
 
     conn, err := net.DialTCP("tcp", nil, tcpAddr)
-    checkError(err)
+    com.CheckError(err)
 
     encoder := gob.NewEncoder(conn)
     decoder := gob.NewDecoder(conn)
     request := com.Request{Id: id, Interval: interval}
     timeReq := com.TimeRequest{Id: id, T: time.Now()}
     err = encoder.Encode(request)
-    checkError(err)
+    com.CheckError(err)
     addChan <- timeReq
     go receiveReply(decoder, delChan, conn)
 }
@@ -82,7 +75,7 @@ func handleRequests(addChan chan com.TimeRequest, delChan chan com.TimeReply, do
 func receiveReply(decoder *gob.Decoder, delChan chan com.TimeReply, conn net.Conn){
     var reply com.Reply
     err := decoder.Decode(&reply)
-    checkError(err)
+    com.CheckError(err)
     timeReply := com.TimeReply{Id: reply.Id, T: time.Now()}
     delChan <- timeReply 
 	conn.Close()

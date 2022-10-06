@@ -98,7 +98,6 @@ func main() {
 	CONN_PORT := getParam(2, "5000")
 
     endpoint := CONN_HOST + ":" + CONN_PORT
-    fmt.Println("Endpoint: ", endpoint)
     numIt := 10
     requestTmp := 6
     interval := com.TPInterval{A: 1000, B: 70000}

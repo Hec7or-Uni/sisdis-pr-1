@@ -1,95 +1,39 @@
 # sisdis-pr-1
 Aplicación distribuida de cálculo de número primos
 
-## Run
+## Getting Started
 
-Cliente
-
-```bash
-go run client.go 155.210.154.198 5000
-```
-
-Master
+### Cliente
 
 ```bash
-go run master.go tcp 155.210.154.198 5000
+go run client.go <ip> <port>
 ```
+### Servidor
 
-Workers
+#### Secuencial
 
 ```bash
-go run worker.go tcp 155.210.154.199 5001
-go run worker.go tcp 155.210.154.199 5002
-go run worker.go tcp 155.210.154.199 5003
-go run worker.go tcp 155.210.154.199 5004
-go run worker.go tcp 155.210.154.199 5005
-go run worker.go tcp 155.210.154.199 5006
+go run ./server/server-draft.go -s <ip> <port>
 ```
 
-## cliente-servidor secuencial
+#### Con una Goroutine por petición
 
-```mermaid
-sequenceDiagram
-  Client ->> Server: Request
-  activate Server
-Note right of Server: getIntervals(start int, end int)
-  Server ->> Client: Response
-  deactivate Server
-
-    Client_2 ->> Server: Request
-  activate Server
-Note left of Server: getIntervals(start int, end int)
-  Server ->> Client_2: Response
-  deactivate Server
+```bash
+go run ./server/server-draft.go -cspf <ip> <port>
 ```
 
-## cliente servidor concurrente
+#### Con un pool fijo de Goroutines
 
-### Sin pool fijo
-
-```mermaid
-sequenceDiagram
-  Client_{1..N}->>Server: Request
-  activate Server
-  Client_{1..N}->>Server: Request
-  activate Server
-  Note right of Server: getIntervals(start int, end int)
-  Server->>Client_{1..N}: Response
-  deactivate Server
-  Server->>Client_{1..N}: Response
-  deactivate Server
+```bash
+go run ./server/server-draft.go -cpf <ip> <port> <num gorutines>
 ```
 
-### Con pool fijo
+#### Master Worker
 
-```mermaid
-sequenceDiagram
-  Client_{1..N}->>Server: Request
-  activate Server
-  Client_{1..N}->>Server: Request
-  activate Server
-  Note right of Server: getIntervals(start int, end int)
-  Server->>Client_{1..N}: Response
-  deactivate Server
-  Server->>Client_{1..N}: Response
-  deactivate Server
-Note over Server: Max N Goroutines
-```
+variables de configuración en el codigo master.go para poder lanzar correctamente el script que ejecutara los workers.
+`NIP`: identificador del alumno para logearse con el ssh
+`SRC_PATH`: dirección del ejecutable -> "/home/NIP/Desktop/sisdis-pr-1/"
 
-## master-worker
-```mermaid
-sequenceDiagram
-  Client ->> Server: Request
-  activate Server
-  Server->>Worker_1: run
-  activate Worker_1
-  Server->>Worker_2: run
-  activate Worker_2
-  Note left of Server: getIntervals(start int, end int)
-  Worker_1->>Server: stop
-  deactivate Worker_1
-  Worker_2->>Server: stop
-  deactivate Worker_2
-  Server ->> Client: Response
-  deactivate Server
+```bash
+go run master.go <ip> <port> <num workers>
 ```

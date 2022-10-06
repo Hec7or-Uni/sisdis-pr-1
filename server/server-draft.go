@@ -15,10 +15,9 @@ import (
 	"net"
 	"os"
 	"sisdis-pr-1/com"
+	"strconv"
 	"time"
 )
-
-const MAX_GORUTINES = 6
 
 // PRE: verdad
 // POST: IsPrime devuelve verdad si n es primo y falso en caso contrario
@@ -117,6 +116,8 @@ func main() {
 	ALG := getParam(1, "-s")
 	CONN_HOST := getParam(2, "127.0.0.1")
 	CONN_PORT := getParam(3, "5000")
+	MAX_GORUTINES, err := strconv.Atoi(getParam(3, "6"))
+	if err != nil { MAX_GORUTINES = 6 }
 	// información de los parametros
 	fmt.Printf("Listening in: %s:%s\n", CONN_HOST, CONN_PORT)
 

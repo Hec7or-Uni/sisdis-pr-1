@@ -14,7 +14,6 @@ import (
 	"time"
 )
 
-const MAX_WORKERS = 1
 const NIP = 798095
 const SRC_PATH = "/home/a798095/Desktop/sisdis-pr-1/"
 
@@ -106,14 +105,13 @@ func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) com.CustomReply {
 // Master
 //----------------------------------------------------------------------
 
-func createPool(CONN_PORT string) {
+func createPool(CONN_PORT string, MAX_WORKERS int) {
 	// lanza los workers
 	_, err := exec.Command(SRC_PATH + "launcher.sh", SRC_PATH + "lab102_machines.txt", CONN_PORT, strconv.Itoa(MAX_WORKERS), strconv.Itoa(NIP)).Output()
 	if err != nil {
 		fmt.Println("Error al lanzar los workers", err)
 		os.Exit(1)
 	}
-
 
 	// leer archivo donde se encuentran las direcciones de los workers
 	readFile, err := os.Open("./endpoints.txt")
@@ -144,6 +142,11 @@ func checkWorkerStatus(endpoint string) bool {
 func main() {
 	CONN_HOST := getParam(1, "127.0.0.1")
 	CONN_PORT := getParam(2, "5000")
+	MAX_WORKERS, err := strconv.Atoi(getParam(3, "1"))
+	if err != nil {
+		fmt.Println("Error al convertir el numero de workers", err)
+		os.Exit(1)
+	}
 	// información de los parametros
 	fmt.Printf("Listening in: %s:%s\n", CONN_HOST, CONN_PORT)
 	
@@ -151,7 +154,7 @@ func main() {
 	com.CheckError(err)
 
 	// crear pool de handle request
-	createPool(CONN_PORT)
+	createPool(CONN_PORT, MAX_WORKERS)
 
 	for {
 		conn, err := listener.Accept()

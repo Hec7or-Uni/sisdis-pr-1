@@ -38,9 +38,7 @@ func FindPrimes(interval com.TPInterval) (primes []int) {
 	return primes
 }
 
-func getParam(id int, key string, dfl string) (string) {
-	value, defined := os.LookupEnv(key)
-	if defined { return value }
+func getParam(id int, dfl string) (string) {
 	if len(os.Args) >= id + 1 && os.Args[id] != "" { return os.Args[id] }
 	return dfl
 }
@@ -71,9 +69,9 @@ func handler(conn net.Conn) {
 }
 
 func main() {
-	CONN_TYPE := getParam(1, "TYPE", "tcp")
-	CONN_HOST := getParam(2, "HOST", "127.0.0.1")
-	CONN_PORT := getParam(3, "PORT", "5001")
+	CONN_TYPE := getParam(1, "tcp")
+	CONN_HOST := getParam(2, "127.0.0.1")
+	CONN_PORT := getParam(3, "5001")
 	// información de los parametros
 	fmt.Printf("Listening in: %s:%s\n", CONN_HOST, CONN_PORT)
 	

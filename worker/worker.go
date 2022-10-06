@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-}
-
 // PRE: verdad
 // POST: IsPrime devuelve verdad si n es primo y falso en caso contrario
 func IsPrime(n int) (foundDivisor bool) {
@@ -65,22 +58,21 @@ func handler(conn net.Conn) {
 	texEnd := time.Now()
 	reply:= com.CustomReply{Primes: primos, T: texEnd.Sub(texStart)}
 	err := enc.Encode(reply)
-	checkError(err)
+	com.CheckError(err)
 }
 
 func main() {
-	CONN_TYPE := getParam(1, "tcp")
-	CONN_HOST := getParam(2, "127.0.0.1")
-	CONN_PORT := getParam(3, "5001")
+	CONN_HOST := getParam(1, "127.0.0.1")
+	CONN_PORT := getParam(2, "5001")
 	// información de los parametros
 	fmt.Printf("Listening in: %s:%s\n", CONN_HOST, CONN_PORT)
 	
-	listener, err := net.Listen(CONN_TYPE, CONN_HOST + ":" + CONN_PORT)
-	checkError(err)
+	listener, err := net.Listen("tcp", CONN_HOST + ":" + CONN_PORT)
+	com.CheckError(err)
 	
 	for {
 		conn, err := listener.Accept()
-		checkError(err)
+		com.CheckError(err)
 		handler(conn)
 	}
 }

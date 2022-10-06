@@ -9,7 +9,11 @@
  */
 package com
 
-import "time"
+import (
+	"fmt"
+	"os"
+	"time"
+)
 
 type TPInterval struct {
     A int
@@ -39,4 +43,11 @@ type TimeReply struct {
 type CustomReply struct {
     T time.Duration
     Primes []int
+}
+
+func CheckError(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
 }

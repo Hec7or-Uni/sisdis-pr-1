@@ -18,12 +18,7 @@ import (
 	"time"
 )
 
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-}
+const MAX_GORUTINES = 6
 
 // PRE: verdad
 // POST: IsPrime devuelve verdad si n es primo y falso en caso contrario
@@ -74,7 +69,7 @@ func handleSimple(conn net.Conn) {
 
 	txonStart2 := time.Now()
 	err := enc.Encode(primos_reply)
-	checkError(err)
+	com.CheckError(err)
 	txonEnd2 := time.Now()
 
 	txon := txonEnd1.Sub(txonStart1) + txonEnd2.Sub(txonStart2) // tiempo de transmisión
@@ -108,7 +103,7 @@ func handleCPF(ch chan net.Conn) {
 
 		txonStart2 := time.Now()
 		err := enc.Encode(primos_reply)
-		checkError(err)
+		com.CheckError(err)
 		txonEnd2 := time.Now()
 
 		txon := txonEnd1.Sub(txonStart1) + txonEnd2.Sub(txonStart2) // tiempo de transmisión
@@ -120,37 +115,36 @@ func handleCPF(ch chan net.Conn) {
 
 func main() {
 	ALG := getParam(1, "-s")
-	CONN_TYPE := getParam(2, "tcp")
-	CONN_HOST := getParam(3, "127.0.0.1")
-	CONN_PORT := getParam(4, "5000")
+	CONN_HOST := getParam(2, "127.0.0.1")
+	CONN_PORT := getParam(3, "5000")
 	// información de los parametros
 	fmt.Printf("Listening in: %s:%s\n", CONN_HOST, CONN_PORT)
 
-	listener, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
-	checkError(err)
+	listener, err := net.Listen("tcp", CONN_HOST+":"+CONN_PORT)
+	com.CheckError(err)
 
 	switch ALG {
 	case "-s":
 		for {
 			conn, err := listener.Accept()
-			checkError(err)
+			com.CheckError(err)
 			handleSimple(conn)
 		}
 	case "-cspf":
 		for {
 			conn, err := listener.Accept()
-			checkError(err)
+			com.CheckError(err)
 			go handleSimple(conn)
 		}
 	case "-cpf":
 		ch := make(chan net.Conn)
-		for i := 0; i < 6; i++ {
+		for i := 0; i < MAX_GORUTINES; i++ {
 			go handleCPF(ch)
 		}
 
 		for {
 			conn, err := listener.Accept()
-			checkError(err)
+			com.CheckError(err)
 			ch <- conn
 		}
 	default:

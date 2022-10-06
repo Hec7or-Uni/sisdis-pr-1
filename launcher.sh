@@ -1,13 +1,12 @@
 #!/bin/bash
 
 # Ping a list of hosts and save the ones that are up to a file
-# Usage: ping.sh <file with list of hosts> <desire port> <numer of hosts>
+# Usage: ping.sh <file with list of hosts> <desire port> <numer of hosts> <NIP>
 
 LABS=$1
 PORT=$2
 MAX_HOSTS=$3
 NIP=$4
-
 
 # Check if the file exists
 if [ ! -f ${LABS} ]; then
@@ -27,11 +26,6 @@ fi
 if [ ! -r ${LABS} ]; then
     echo "File ${LABS} is not readable"
     exit 1
-fi
-
-# Check if the output file exists
-if [ -f $2 ]; then
-    rm $2
 fi
 
 # Loop through the list of hosts until reach the max number of hosts
@@ -59,7 +53,7 @@ done < ${LABS}
 # run all workers
 IFS=:
 while  read ip port; do
-    echo $endpoint
+    echo $ip $port
     # execute remote command
-    echo ssh -i "~/.ssh/id_rsa" a${NIP}@${ip} "go run worker.go ${ip} ${port}"
+    ssh -i "~/.ssh/id_rsa" a${NIP}@${ip} "~/Desktop/sisdis-pr-1/bin/./worker ${ip} ${port}" > /dev/null 2>&1 &
 done < "endpoints.txt"

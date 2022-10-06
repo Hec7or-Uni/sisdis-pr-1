@@ -9,9 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"sisdis-pr-1/com"
+	"strconv"
 	"strings"
 	"time"
 )
+
+const MAX_WORKERS = 1
+const NIP = 798095
+const SRC_PATH = "/home/a798095/Desktop/sisdis-pr-1/"
 
 var connections = make(chan net.Conn)
 
@@ -101,8 +106,18 @@ func receiveReply(dec2w *gob.Decoder, conn2w net.Conn) com.CustomReply {
 // Master
 //----------------------------------------------------------------------
 
-func createPool() {
-	readFile, err := os.Open("file.txt")
+func createPool(CONN_PORT string) {
+	// lanza los workers
+	_, err := exec.Command(SRC_PATH + "launcher.sh", SRC_PATH + "lab102_machines.txt", CONN_PORT, strconv.Itoa(MAX_WORKERS), strconv.Itoa(NIP)).Output()
+	if err != nil {
+		fmt.Println("Error al lanzar los workers", err)
+		os.Exit(1)
+	}
+
+
+	// leer archivo donde se encuentran las direcciones de los workers
+	readFile, err := os.Open("./endpoints.txt")
+
 	if err != nil { log.Fatal(err) }
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
@@ -112,6 +127,7 @@ func createPool() {
 	}
 	readFile.Close()
 
+	// crear pool de adminstracion para los workers
 	for index, endpoint := range lines {
 		go handleRequests(index + 1, endpoint)	// crear goroutine para leer peticiones
 	}
@@ -135,7 +151,7 @@ func main() {
 	com.CheckError(err)
 
 	// crear pool de handle request
-	createPool()
+	createPool(CONN_PORT)
 
 	for {
 		conn, err := listener.Accept()

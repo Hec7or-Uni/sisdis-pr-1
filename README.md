@@ -1,31 +1,35 @@
 # sisdis-pr-1
 Aplicación distribuida de cálculo de número primos
 
+## Requirements
+
+Para la correcta ejecución de los scripts se debe tener acceso por clave publica a los laboratorios que se desee acceder.
+
 ## Getting Started
 
 ### Cliente
 
 ```bash
-go run client.go <ip> <port>
+./client <ip> <port>
 ```
 ### Servidor
 
 #### Secuencial
 
 ```bash
-go run ./server/server-draft.go -s <ip> <port>
+./server/server -s <ip> <port>
 ```
 
 #### Con una Goroutine por petición
 
 ```bash
-go run ./server/server-draft.go -cspf <ip> <port>
+./server/server -cspf <ip> <port>
 ```
 
 #### Con un pool fijo de Goroutines
 
 ```bash
-go run ./server/server-draft.go -cpf <ip> <port> <num gorutines>
+./server/server -cpf <ip> <port> <num gorutines>
 ```
 
 #### Master Worker
@@ -35,5 +39,5 @@ variables de configuración en el codigo master.go para poder lanzar correctamen
 `SRC_PATH`: dirección del ejecutable -> "/home/NIP/Desktop/sisdis-pr-1/"
 
 ```bash
-go run master.go <ip> <port> <num workers>
+./master <ip> <port> <num workers>
 ```
